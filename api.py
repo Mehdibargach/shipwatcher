@@ -228,3 +228,10 @@ async def trigger_check():
     """Manually trigger a scheduled check (with alerts)."""
     await scheduler.scheduled_check()
     return {"triggered": True}
+
+
+@app.post("/trigger-digest")
+async def trigger_digest():
+    """Manually trigger the daily digest email."""
+    await scheduler.daily_digest()
+    return {"triggered": True}
