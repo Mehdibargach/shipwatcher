@@ -2,7 +2,10 @@
 ShipWatcher API — Backend FastAPI
 """
 
+import os
 import re
+import logging
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
@@ -11,8 +14,19 @@ from pydantic import BaseModel
 
 import store
 import checker
+import scheduler
 
-app = FastAPI(title="ShipWatcher", version="0.1.0")
+logging.basicConfig(level=logging.INFO)
+
+
+@asynccontextmanager
+async def lifespan(app):
+    scheduler.start_scheduler()
+    yield
+    scheduler.stop_scheduler()
+
+
+app = FastAPI(title="ShipWatcher", version="0.2.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -194,3 +208,23 @@ async def check_all():
             "all_pass": failed == 0,
         },
     }
+
+
+# ── Settings ──────────────────────────────────────────────────────────────────
+
+@app.get("/settings")
+def get_settings():
+    """Get current alert and scheduler settings."""
+    return {
+        "alert_email": os.getenv("ALERT_EMAIL", ""),
+        "check_interval_hours": int(os.getenv("CHECK_INTERVAL_HOURS", "6")),
+        "resend_configured": bool(os.getenv("RESEND_API_KEY", "")),
+        "scheduler_running": scheduler.scheduler.running,
+    }
+
+
+@app.post("/trigger-check")
+async def trigger_check():
+    """Manually trigger a scheduled check (with alerts)."""
+    await scheduler.scheduled_check()
+    return {"triggered": True}

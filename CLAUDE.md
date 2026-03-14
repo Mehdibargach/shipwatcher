@@ -4,7 +4,7 @@
 Monitoring automatique pour builders qui shippent des side projects. L'utilisateur ajoute ses projets (URL + endpoint), ShipWatcher vérifie qu'ils marchent vraiment (pas juste un ping) et alerte par email si quelque chose casse.
 
 ## Phase actuelle
-**BUILD — Walking Skeleton**
+**BUILD — Scope 2 (Cron + Alertes Email)**
 
 ## Architecture
 - **Backend :** FastAPI (Python) — hébergé sur Render
