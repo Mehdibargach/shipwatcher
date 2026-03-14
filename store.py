@@ -1,5 +1,7 @@
 """
 Project store — JSON file-based storage for monitored projects.
+Seed data is loaded from seed.json on first boot (survives redeploys).
+Runtime data is stored in data/projects.json (ephemeral on Render).
 """
 
 import json
@@ -8,13 +10,25 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 STORE_PATH = Path("data/projects.json")
+SEED_PATH = Path("seed.json")
 
 
 def _load() -> list[dict]:
-    if not STORE_PATH.exists():
-        return []
-    with open(STORE_PATH, "r") as f:
-        return json.load(f)
+    if STORE_PATH.exists():
+        with open(STORE_PATH, "r") as f:
+            data = json.load(f)
+            if data:
+                return data
+
+    # First boot or after redeploy: load seed data
+    if SEED_PATH.exists():
+        with open(SEED_PATH, "r") as f:
+            seed = json.load(f)
+        # Save seed to runtime store
+        _save(seed)
+        return seed
+
+    return []
 
 
 def _save(projects: list[dict]):
