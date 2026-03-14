@@ -19,8 +19,9 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "http://localhost:3000",
+        "https://id-preview--1e95ce32-6b85-454b-8dc5-cc0afc028afb.lovable.app",
     ],
-    allow_origin_regex=r"https://.*\.(lovableproject\.com|lovable\.app)",
+    allow_origin_regex=r"https://.*\.(lovableproject\.com|lovable\.app|lovable\.dev)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
