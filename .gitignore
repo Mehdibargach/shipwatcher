@@ -1,0 +1,15 @@
+# iCloud sync duplicates
+*\ 2
+*\ 2.*
+*\ 3
+*\ 3.*
+
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+
+# Data
+data/*.json
+!seed.json
