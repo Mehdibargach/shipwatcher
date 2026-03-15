@@ -1,5 +1,6 @@
 """
 Scheduler — runs checks automatically at regular intervals.
+- Keep-alive pings every 10 min: prevent cold starts on Free tier services
 - Checks every 6h: alert email if failures
 - Daily digest at 8am UTC: full summary email
 """
@@ -8,6 +9,7 @@ import os
 import logging
 from datetime import datetime, timezone
 
+import httpx
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
@@ -21,6 +23,7 @@ logger = logging.getLogger("shipwatcher.scheduler")
 scheduler = AsyncIOScheduler()
 
 CHECK_INTERVAL_HOURS = int(os.getenv("CHECK_INTERVAL_HOURS", "6"))
+KEEPALIVE_INTERVAL_MIN = int(os.getenv("KEEPALIVE_INTERVAL_MIN", "10"))
 DIGEST_HOUR_UTC = int(os.getenv("DIGEST_HOUR_UTC", "8"))
 
 
@@ -75,8 +78,39 @@ async def daily_digest():
     await alerts.send_daily_digest(all_results)
 
 
+async def keepalive_ping():
+    """Ping health endpoints only — keeps Free tier services awake without consuming API credits."""
+    logger.info("Keep-alive ping starting...")
+    projects = store.list_projects()
+    if not projects:
+        return
+
+    async with httpx.AsyncClient() as client:
+        for p in projects:
+            url = p["url"] + p["health_endpoint"]
+            try:
+                resp = await client.get(url, timeout=15)
+                logger.debug(f"Keep-alive {p['name']}: {resp.status_code}")
+            except Exception:
+                logger.debug(f"Keep-alive {p['name']}: failed (service may be starting)")
+
+    logger.info(f"Keep-alive done — pinged {len(projects)} services")
+
+
 def start_scheduler():
     """Start the background scheduler."""
+    # Keep-alive pings — prevent cold starts on Free tier
+    if KEEPALIVE_INTERVAL_MIN > 0:
+        scheduler.add_job(
+            keepalive_ping,
+            trigger=IntervalTrigger(minutes=KEEPALIVE_INTERVAL_MIN),
+            id="keepalive_ping",
+            name=f"Keep-alive ping every {KEEPALIVE_INTERVAL_MIN}min",
+            replace_existing=True,
+        )
+        logger.info(f"Keep-alive: every {KEEPALIVE_INTERVAL_MIN}min")
+
+    # Full checks with alerts
     if CHECK_INTERVAL_HOURS > 0:
         scheduler.add_job(
             scheduled_check,

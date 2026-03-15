@@ -1,7 +1,0 @@
-The Builder PM Method is a systematic approach to building AI products.
-It consists of four phases: FRAME, BUILD, EVALUATE, and SHIP.
-The method was created by Mehdi Bargach, a Senior Product Manager.
-The key insight is: "In AI, shipping is easy. Evaluating is hard."
-The BUILD phase uses vertical slices called Walking Skeleton and Scopes.
-Each scope has micro-tests that serve as acceptance criteria.
-The EVALUATE phase uses an Eval Gate with three decision levels: GO, CONDITIONAL GO, and NO-GO.
