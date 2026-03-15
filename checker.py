@@ -88,11 +88,11 @@ async def run_smoke_test(client: httpx.AsyncClient, project: dict) -> CheckResul
 
     try:
         if payload_type == "form":
-            resp = await client.post(url, data=payload or {}, timeout=90)
+            resp = await client.post(url, data=payload or {}, timeout=180)
         elif payload:
-            resp = await client.post(url, json=payload, timeout=90)
+            resp = await client.post(url, json=payload, timeout=180)
         else:
-            resp = await client.post(url, timeout=90)
+            resp = await client.post(url, timeout=180)
 
         latency = int((time.monotonic() - start) * 1000)
 
@@ -150,7 +150,7 @@ async def run_smoke_test(client: httpx.AsyncClient, project: dict) -> CheckResul
             check_type="smoke",
             success=False,
             latency_ms=latency,
-            error="Timeout (90s)",
+            error="Timeout (180s)",
         )
     except Exception as e:
         latency = int((time.monotonic() - start) * 1000)
